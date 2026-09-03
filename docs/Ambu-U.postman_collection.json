@@ -1,0 +1,227 @@
+﻿{
+  "info": {
+    "name": "Ambu-U API",
+    "description": "Coleccion completa de endpoints para el sistema de rastreo de ambulancias Ambu-U",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8000/api", "type": "string" },
+    { "key": "token", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "🔐 Autenticacion",
+      "item": [
+        {
+          "name": "Login (Admin)",
+          "event": [{ "listen": "test", "script": { "exec": ["const r = pm.response.json();", "if(r.data && r.data.token) pm.collectionVariables.set('token', r.data.token);"], "type": "text/javascript" } }],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/login",
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@ambuu.com\",\n  \"password\": \"Admin123*\"\n}" }
+          }
+        },
+        {
+          "name": "Login (Conductor)",
+          "event": [{ "listen": "test", "script": { "exec": ["const r = pm.response.json();", "if(r.data && r.data.token) pm.collectionVariables.set('token', r.data.token);"], "type": "text/javascript" } }],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/login",
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"conductor@ambuu.com\",\n  \"password\": \"Driver123*\"\n}" }
+          }
+        },
+        {
+          "name": "Mi Perfil (GET /me)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/me",
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/logout",
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "🚑 Ambulancias",
+      "item": [
+        {
+          "name": "Listar Ambulancias",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/ambulances", "query": [{ "key": "status", "value": "available", "disabled": true }] },
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Crear Ambulancia",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/ambulances",
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"plate\": \"ABC123\",\n  \"brand\": \"Mercedes-Benz\",\n  \"model\": \"Sprinter 2022\",\n  \"km_per_gallon\": 12.5,\n  \"soat_expires_at\": \"2025-12-31\",\n  \"tech_review_expires_at\": \"2025-10-15\",\n  \"status\": \"available\"\n}" }
+          }
+        },
+        {
+          "name": "Ver Ambulancia",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/ambulances/1",
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Ambulancias Disponibles",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/ambulances/available",
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "🧑‍⚕️ Pacientes",
+      "item": [
+        {
+          "name": "Listar Pacientes",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/patients",
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Crear Paciente",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/patients",
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"identification\": \"1234567890\",\n  \"first_name\": \"Juan\",\n  \"last_name\": \"Perez\",\n  \"eps\": \"Sura\",\n  \"is_soat_case\": false,\n  \"notes\": \"Paciente con antecedentes de hipertension\"\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📋 Remisiones",
+      "item": [
+        {
+          "name": "Crear Remision",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/remissions",
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"ambulance_id\": 1,\n  \"patient_id\": 1,\n  \"origin_address\": \"Calle 80 # 45-20, Bogota\",\n  \"destination_address\": \"Hospital San Jose, Bogota\",\n  \"is_out_of_city\": false,\n  \"notes\": \"Traslado urgente por dolor toracico\",\n  \"occupants\": [\n    { \"name\": \"Dr. Maria Lopez\", \"identification\": \"987654321\", \"role\": \"doctor\" },\n    { \"name\": \"Ana Gomez\", \"identification\": \"111222333\", \"role\": \"nurse\" }\n  ]\n}" }
+          }
+        },
+        {
+          "name": "Listar Remisiones",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/remissions", "query": [{ "key": "status", "value": "en_camino", "disabled": true }] },
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Ver Remision con Ruta",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/remissions/1",
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Iniciar Traslado (startTransfer)",
+          "request": {
+            "method": "PATCH",
+            "url": "{{base_url}}/remissions/1/start-transfer",
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Finalizar Remision",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/remissions/1/finish",
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"notes\": \"Paciente entregado en sala de urgencias, estable.\"\n}" }
+          }
+        },
+        {
+          "name": "Cancelar Remision",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/remissions/1/cancel",
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Paciente no requirio traslado, atendido en sitio.\"\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📡 Telemetria GPS",
+      "item": [
+        {
+          "name": "Enviar Coordenadas GPS",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/remissions/1/location",
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"latitude\": 4.710989,\n  \"longitude\": -74.072092,\n  \"speed\": 45.5,\n  \"heading\": 270.0,\n  \"recorded_at\": \"2026-08-29T20:00:00Z\"\n}" }
+          }
+        },
+        {
+          "name": "Historial de Ruta GPS",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/remissions/1/locations",
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "🤖 IA Clinica (DeepSeek)",
+      "item": [
+        {
+          "name": "Analizar Observacion Clinica",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/ai/analyze-observation",
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"observation\": \"Paciente masculino de 65 anios, refiere dolor toracico opresivo irradiado al brazo izquierdo, con diaforesis profusa y nauseas. TA 90/60 mmHg, FC 110 lpm, SpO2 92%.\",\n  \"patient_id\": 1,\n  \"remission_id\": 1\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📊 Estadisticas",
+      "item": [
+        {
+          "name": "Metricas de Flota",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/stats/fleet",
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Metricas de Remisiones",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/stats/remissions",
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        }
+      ]
+    }
+  ]
+}
