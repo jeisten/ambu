@@ -14,8 +14,8 @@ class DriverController extends Controller
         $ambulances = Ambulance::where('status', 'available')->get();
 
         $data = $ambulances->map(function ($ambulance) {
-            $soatExpiresIn = $ambulance->soat_expires_at ? $ambulance->soat_expires_at->diffInDays(now()) : null;
-            $techExpiresIn = $ambulance->tech_review_expires_at ? $ambulance->tech_review_expires_at->diffInDays(now()) : null;
+            $soatExpiresIn = $ambulance->soat_expires_at ? now()->diffInDays($ambulance->soat_expires_at) : null;
+            $techExpiresIn = $ambulance->tech_review_expires_at ? now()->diffInDays($ambulance->tech_review_expires_at) : null;
 
             return [
                 'id' => $ambulance->id,

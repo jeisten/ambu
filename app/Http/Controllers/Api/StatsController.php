@@ -169,8 +169,8 @@ class StatsController extends Controller
             ->orderBy('tech_review_expires_at')
             ->get()
             ->map(function ($ambulance) {
-                $soatExpiresIn = $ambulance->soat_expires_at?->diffInDays(now());
-                $techExpiresIn = $ambulance->tech_review_expires_at?->diffInDays(now());
+                $soatExpiresIn = $ambulance->soat_expires_at ? now()->diffInDays($ambulance->soat_expires_at) : null;
+                $techExpiresIn = $ambulance->tech_review_expires_at ? now()->diffInDays($ambulance->tech_review_expires_at) : null;
 
                 return [
                     'ambulance_id' => $ambulance->id,
