@@ -46,7 +46,7 @@ class StoreRemissionRequest extends FormRequest
             'patient.is_soat_case' => ['nullable', 'boolean'],
             'patient.notes' => ['nullable', 'string'],
             'origin_address' => ['required', 'string', 'max:255'],
-            'destination_address' => ['required', 'string', 'max:255'],
+            'destination_address' => ['nullable', 'string', 'max:255'],
             'is_out_of_city' => ['nullable', 'boolean'],
             'notes' => ['nullable', 'string'],
             'occupants' => ['nullable', 'array'],
