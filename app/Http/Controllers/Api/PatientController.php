@@ -64,6 +64,33 @@ class PatientController extends Controller
     }
 
     /**
+     * Search for a patient by identification (cédula/document).
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function searchByIdentification(Request $request): JsonResponse
+    {
+        $request->validate([
+            'identification' => ['required', 'string', 'max:50'],
+        ]);
+
+        $patient = Patient::where('identification', $request->input('identification'))->first();
+
+        if (!$patient) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Paciente no encontrado.',
+            ], Response::HTTP_NOT_FOUND);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $patient,
+        ], Response::HTTP_OK);
+    }
+
+    /**
      * Display the specified patient.
      *
      * @param Patient $patient

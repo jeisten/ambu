@@ -42,6 +42,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('ambulances', AmbulanceController::class);
 
     // --- Módulo de Pacientes ---
+    Route::get('/patients/search', [PatientController::class, 'searchByIdentification'])->name('patients.search');
     Route::apiResource('patients', PatientController::class);
 
     // --- Módulo de Remisiones y Telemetría ---
