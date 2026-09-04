@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Ambulance;
 use App\Models\Remission;
 use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
