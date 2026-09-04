@@ -102,4 +102,95 @@ class StatsController extends Controller
             ],
         ], Response::HTTP_OK);
     }
+
+    /**
+     * Get admin fleet statistics for today.
+     * Requires admin role.
+     *
+     * @return JsonResponse
+     */
+    public function adminFleetStats(): JsonResponse
+    {
+        if (!auth()->user()->isAdmin()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes permisos para acceder a esta información.',
+            ], Response::HTTP_FORBIDDEN);
+        }
+
+        $today = now()->startOfDay();
+
+        $todayRemissions = Remission::whereDate('created_at', $today)->count();
+        $todayCompletedRemissions = Remission::whereDate('created_at', $today)
+            ->where('status', 'finalizado')->count();
+        $todayKm = (float) Remission::whereDate('created_at', $today)
+            ->where('status', 'finalizado')
+            ->sum('total_kilometers');
+        $todayFuel = (float) Remission::whereDate('created_at', $today)
+            ->where('status', 'finalizado')
+            ->sum('fuel_consumed_gallons');
+
+        $expiringDocsCount = Ambulance::expiringDocs(5)->count();
+        $inMaintenanceCount = Ambulance::where('status', 'maintenance')->count();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'date' => $today->toDateString(),
+                'today_remissions' => $todayRemissions,
+                'today_completed' => $todayCompletedRemissions,
+                'today_total_kilometers' => round($todayKm, 3),
+                'today_total_fuel_gallons' => round($todayFuel, 3),
+                'alerts' => [
+                    'expiring_documentation_count' => $expiringDocsCount,
+                    'ambulances_in_maintenance' => $inMaintenanceCount,
+                ],
+            ],
+        ], Response::HTTP_OK);
+    }
+
+    /**
+     * Get list of ambulances with expiring documents.
+     * Requires admin role.
+     *
+     * @return JsonResponse
+     */
+    public function documentAlerts(): JsonResponse
+    {
+        if (!auth()->user()->isAdmin()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes permisos para acceder a esta información.',
+            ], Response::HTTP_FORBIDDEN);
+        }
+
+        $ambulances = Ambulance::expiringDocs(30)
+            ->orderBy('soat_expires_at')
+            ->orderBy('tech_review_expires_at')
+            ->get()
+            ->map(function ($ambulance) {
+                $soatExpiresIn = $ambulance->soat_expires_at?->diffInDays(now());
+                $techExpiresIn = $ambulance->tech_review_expires_at?->diffInDays(now());
+
+                return [
+                    'ambulance_id' => $ambulance->id,
+                    'plate' => $ambulance->plate,
+                    'brand' => $ambulance->brand,
+                    'model' => $ambulance->model,
+                    'status' => $ambulance->status,
+                    'soat_expires_at' => $ambulance->soat_expires_at?->toDateString(),
+                    'soat_expires_in_days' => $soatExpiresIn,
+                    'soat_urgent' => $soatExpiresIn !== null && $soatExpiresIn <= 5,
+                    'tech_review_expires_at' => $ambulance->tech_review_expires_at?->toDateString(),
+                    'tech_expires_in_days' => $techExpiresIn,
+                    'tech_urgent' => $techExpiresIn !== null && $techExpiresIn <= 5,
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'data' => $ambulances,
+            'total' => $ambulances->count(),
+        ], Response::HTTP_OK);
+    }
 }

@@ -237,4 +237,43 @@ class RemissionController extends Controller
             'data' => $locations,
         ], Response::HTTP_OK);
     }
+
+    /**
+     * Register additional fuel consumed during an active remission.
+     * The driver can report extra fuel consumption beyond the calculated amount.
+     *
+     * @param Remission $remission
+     * @return JsonResponse
+     */
+    public function recordFuelConsumed(Remission $remission): JsonResponse
+    {
+        if (!in_array($remission->status, ['en_camino', 'trasladando'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Solo se puede registrar combustible en remisiones activas.',
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        request()->validate([
+            'fuel_consumed_gallons' => ['required', 'numeric', 'min:0.001', 'max:999.999'],
+        ], [
+            'fuel_consumed_gallons.required' => 'El consumo de gasolina es requerido.',
+            'fuel_consumed_gallons.numeric' => 'El consumo debe ser un número válido.',
+            'fuel_consumed_gallons.min' => 'El consumo debe ser mayor a 0.',
+        ]);
+
+        $additionalFuel = (float) request()->input('fuel_consumed_gallons');
+        $remission->fuel_consumed_gallons += $additionalFuel;
+        $remission->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Combustible registrado exitosamente',
+            'data' => [
+                'remission_id' => $remission->id,
+                'fuel_added_gallons' => $additionalFuel,
+                'total_fuel_consumed_gallons' => (float) $remission->fuel_consumed_gallons,
+            ],
+        ], Response::HTTP_OK);
+    }
 }
