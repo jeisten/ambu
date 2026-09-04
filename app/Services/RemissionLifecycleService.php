@@ -64,7 +64,7 @@ class RemissionLifecycleService
                 'driver_id' => $data['driver_id'],
                 'patient_id' => $patientId,
                 'origin_address' => $data['origin_address'],
-                'destination_address' => $data['destination_address'],
+                'destination_address' => $data['destination_address'] ?? null,
                 'status' => 'en_camino',
                 'is_out_of_city' => $data['is_out_of_city'] ?? false,
                 'started_at' => now(),
