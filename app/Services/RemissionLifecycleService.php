@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Ambulance;
+use App\Models\Patient;
 use App\Models\Remission;
 use Illuminate\Support\Facades\DB;
 
@@ -32,6 +33,7 @@ class RemissionLifecycleService
 
     /**
      * Create a new remission, allocate the ambulance and register any occupants.
+     * If patient data is provided, find or create the patient by identification.
      *
      * @param array<string, mixed> $data
      * @param array<int, array<string, mixed>> $occupants
@@ -43,6 +45,16 @@ class RemissionLifecycleService
             $ambulance = Ambulance::findOrFail($data['ambulance_id']);
             $ambulance->update(['status' => 'in_service']);
 
+            // Handle patient: use existing patient_id or find/create by identification
+            $patientId = $data['patient_id'] ?? null;
+            if (!$patientId && isset($data['patient'])) {
+                $patientId = $this->findOrCreatePatient($data['patient'])->id;
+            }
+
+            if (!$patientId) {
+                throw new \InvalidArgumentException('Patient ID or patient data is required.');
+            }
+
             $code = $data['code'] ?? $this->generateUniqueCode();
 
             /** @var Remission $remission */
@@ -50,7 +62,7 @@ class RemissionLifecycleService
                 'code' => $code,
                 'ambulance_id' => $ambulance->id,
                 'driver_id' => $data['driver_id'],
-                'patient_id' => $data['patient_id'],
+                'patient_id' => $patientId,
                 'origin_address' => $data['origin_address'],
                 'destination_address' => $data['destination_address'],
                 'status' => 'en_camino',
@@ -73,6 +85,39 @@ class RemissionLifecycleService
 
             return $remission->load(['ambulance', 'driver', 'patient', 'occupants']);
         });
+    }
+
+    /**
+     * Find an existing patient by identification or create a new one.
+     * Returns existing patient if found, otherwise creates and returns new patient.
+     *
+     * @param array<string, mixed> $patientData
+     * @return Patient
+     */
+    private function findOrCreatePatient(array $patientData): Patient
+    {
+        $identification = $patientData['identification'] ?? null;
+
+        if (!$identification) {
+            throw new \InvalidArgumentException('Patient identification is required.');
+        }
+
+        // Search for existing patient by identification
+        $patient = Patient::where('identification', $identification)->first();
+
+        if ($patient) {
+            return $patient;
+        }
+
+        // Create new patient
+        return Patient::create([
+            'identification' => $identification,
+            'first_name' => $patientData['first_name'] ?? '',
+            'last_name' => $patientData['last_name'] ?? '',
+            'eps' => $patientData['eps'] ?? null,
+            'is_soat_case' => $patientData['is_soat_case'] ?? false,
+            'notes' => $patientData['notes'] ?? null,
+        ]);
     }
 
     /**
