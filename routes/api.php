@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\DriverController;
 use App\Http\Controllers\Api\PatientController;
 use App\Http\Controllers\Api\RemissionController;
 use App\Http\Controllers\Api\StatsController;
+use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -36,6 +37,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // --- Módulo Driver ---
     Route::get('/drivers/me/ambulance', [DriverController::class, 'myAmbulance'])->name('drivers.me.ambulance');
+
+    // --- Módulo de Usuarios (Conductores, Admins, etc) ---
+    Route::apiResource('users', UserController::class)->only(['store', 'index', 'show', 'update', 'destroy']);
 
     // --- Módulo de Flota de Ambulancias ---
     Route::get('/ambulances/available', [AmbulanceController::class, 'available'])->name('ambulances.available');
