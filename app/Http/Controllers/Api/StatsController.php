@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Ambulance;
+use App\Models\Location;
 use App\Models\Remission;
 use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -191,6 +192,70 @@ class StatsController extends Controller
             'success' => true,
             'data' => $ambulances,
             'total' => $ambulances->count(),
+        ], Response::HTTP_OK);
+    }
+
+    /**
+     * Get real-time fleet locations: last GPS position of each active remission.
+     * For admin map view.
+     *
+     * @return JsonResponse
+     */
+    public function fleetLocations(): JsonResponse
+    {
+        if (!auth()->user()->isAdmin()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes permisos para acceder a esta información.',
+            ], Response::HTTP_FORBIDDEN);
+        }
+
+        $activeRemissions = Remission::with(['ambulance', 'driver', 'patient'])
+            ->whereIn('status', ['en_camino', 'trasladando'])
+            ->get();
+
+        $data = $activeRemissions->map(function ($remission) {
+            $lastLocation = Location::where('remission_id', $remission->id)
+                ->latest('recorded_at')
+                ->first();
+
+            return [
+                'remission_id' => $remission->id,
+                'code' => $remission->code,
+                'ambulance' => [
+                    'id' => $remission->ambulance->id,
+                    'plate' => $remission->ambulance->plate,
+                    'status' => $remission->ambulance->status,
+                ],
+                'driver' => [
+                    'id' => $remission->driver->id,
+                    'name' => $remission->driver->name,
+                    'phone' => $remission->driver->phone,
+                ],
+                'patient' => [
+                    'id' => $remission->patient->id,
+                    'name' => $remission->patient->getFullNameAttribute(),
+                ],
+                'origin_address' => $remission->origin_address,
+                'destination_address' => $remission->destination_address,
+                'status' => $remission->status,
+                'started_at' => $remission->started_at?->toIso8601String(),
+                'transfer_started_at' => $remission->transfer_started_at?->toIso8601String(),
+                'total_kilometers' => (float) $remission->total_kilometers,
+                'last_location' => $lastLocation ? [
+                    'latitude' => (float) $lastLocation->latitude,
+                    'longitude' => (float) $lastLocation->longitude,
+                    'speed' => $lastLocation->speed !== null ? (float) $lastLocation->speed : null,
+                    'heading' => $lastLocation->heading !== null ? (float) $lastLocation->heading : null,
+                    'recorded_at' => $lastLocation->recorded_at?->toIso8601String() ?? $lastLocation->created_at?->toIso8601String(),
+                ] : null,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $data,
+            'total_active' => $data->count(),
         ], Response::HTTP_OK);
     }
 }

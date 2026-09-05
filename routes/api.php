@@ -73,5 +73,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/stats/fleet', [StatsController::class, 'adminFleetStats'])->name('stats.fleet');
         Route::get('/alerts/documents', [StatsController::class, 'documentAlerts'])->name('alerts.documents');
+        Route::get('/fleet/locations/latest', [StatsController::class, 'fleetLocations'])->name('fleet.locations');
     });
 });
